@@ -1,17 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
-  <title>Vanilla JavaScript App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Dynamique Odjoumani</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        input { padding: 5px; }
+        button { padding: 5px 10px; margin: 2px; }
+    </style>
 </head>
-
 <body>
-  <main>
-    <h1>Vanilla JavaScript App</h1>
-  </main>
-</body>
 
+    <h1>Gestion des utilisateurs</h1>
+
+    <div>
+        <input type="text" id="newName" placeholder="Entrez un nom">
+        <button onclick="createUser()">Créer</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="userTable">
+            <!-- Les utilisateurs seront affichés ici -->
+        </tbody>
+    </table>
+
+    <script>
+        const API_URL = "/data-api/rest/Person"; // L'URL de l'API
+
+        async function fetchUsers() {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            renderUsers(data.value);
+        }
+
+        function renderUsers(users) {
+            const table = document.getElementById("userTable");
+            table.innerHTML = ""; // Efface le contenu actuel
+            users.forEach(user => {
+                table.innerHTML += `
+                    <tr>
+                        <td>${user.Id}</td>
+                        <td>
+                            <input type="text" value="${user.Name}" onblur="updateUser(${user.Id}, this.value)">
+                        </td>
+                        <td>
+                            <button onclick="deleteUser(${user.Id})">Supprimer</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function createUser() {
+            const name = document.getElementById("newName").value;
+            if (!name) return;
+            await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ Name: name })
+            });
+            document.getElementById("newName").value = "";
+            fetchUsers();
+        }
+
+        async function updateUser(id, newName) {
+            await fetch(`${API_URL}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ Name: newName })
+            });
+            fetchUsers();
+        }
+
+        async function deleteUser(id) {
+            await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+            fetchUsers();
+        }
+
+        // Charger la liste des utilisateurs au démarrage
+        fetchUsers();
+    </script>
+
+</body>
 </html>
